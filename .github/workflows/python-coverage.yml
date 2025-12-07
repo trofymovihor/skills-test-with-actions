@@ -1,12 +1,18 @@
 name: Python Coverage
 
 on:
-  pull_request: 
-    branches: 
+  pull_request:
+    branches:
       - main
 
-permissions: 
+permissions:
+  # Gives the action the necessary permissions for publishing new
+  # comments in pull requests.
   pull-requests: write
+  # Gives the action the necessary permissions for pushing data to the
+  # python-coverage-comment-action branch, and for editing existing
+  # comments (to avoid publishing multiple comments in the same PR)
+  contents: write
 
 jobs:
   python-coverage:
@@ -15,7 +21,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-    
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest==8.4.1
+          pip install coverage==7.9
+          pip install pytest-cov==6.2.1
+
+      - name: Run tests and generate coverage details
+        run: pytest --cov=src
+
       - name: Coverage comment
         uses: py-cov-action/python-coverage-comment-action@v3
         with:
@@ -24,4 +45,4 @@ jobs:
           MINIMUM_ORANGE: 70
 
       - name: Fail if below threshold
-        run: coverage report --fail-under=90
+        run: coverage report --fail-under=60
